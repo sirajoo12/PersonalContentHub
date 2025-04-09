@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import ContentCard from '@/components/ui/content-card';
 import Sidebar from '@/components/ui/sidebar';
 import CreatePostModal from '@/components/ui/create-post-modal';
@@ -9,7 +10,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useOfflineCache } from '@/hooks/use-offline-cache';
 import { Post } from '@shared/schema';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 
 enum FilterType {
   ALL = 'all',
@@ -17,7 +18,9 @@ enum FilterType {
   POPULAR = 'popular',
   PHOTOS = 'photos',
   VIDEOS = 'videos',
-  CACHED = 'cached'
+  CACHED = 'cached',
+  INSTAGRAM = 'instagram',
+  YOUTUBE = 'youtube'
 }
 
 const Dashboard: React.FC = () => {
@@ -27,6 +30,7 @@ const Dashboard: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>(FilterType.ALL);
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { toast } = useToast();
   const { getCachedPosts, setCachedPost, isCacheAvailable } = useOfflineCache();
 
@@ -120,7 +124,21 @@ const Dashboard: React.FC = () => {
     // First filter by type
     let filtered = [...posts];
     
-    // Apply content type filters
+    // Apply search query filtering
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(post => {
+        const caption = (post.caption || '').toLowerCase();
+        const title = (post.title || '').toLowerCase();
+        const platform = post.platform.toLowerCase();
+        
+        return caption.includes(query) || 
+               title.includes(query) || 
+               platform.includes(query);
+      });
+    }
+    
+    // Apply content type and platform filters
     switch (activeFilter) {
       case FilterType.PHOTOS:
         filtered = filtered.filter(post => post.type === 'photo' || post.type === 'image');
@@ -130,6 +148,12 @@ const Dashboard: React.FC = () => {
         break;
       case FilterType.CACHED:
         filtered = filtered.filter(post => post.is_cached);
+        break;
+      case FilterType.INSTAGRAM:
+        filtered = filtered.filter(post => post.platform === 'instagram');
+        break;
+      case FilterType.YOUTUBE:
+        filtered = filtered.filter(post => post.platform === 'youtube');
         break;
       default:
         // No content type filtering
@@ -152,7 +176,7 @@ const Dashboard: React.FC = () => {
         // If not a sorting filter, just return the filtered results 
         return filtered;
     }
-  }, [posts, activeFilter]);
+  }, [posts, activeFilter, searchQuery]);
 
   // Handle load more button (simulation)
   const handleLoadMore = () => {
@@ -198,75 +222,133 @@ const Dashboard: React.FC = () => {
                 </h2>
               </div>
               
+              {/* Search bar */}
+              <div className="w-full md:w-auto mt-4 md:mt-0 md:ml-4">
+                <div className="relative flex items-center">
+                  <Search className="absolute left-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="search"
+                    placeholder="Search posts..."
+                    className="pl-10 pr-4 py-2 w-full md:w-60"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button 
+                      className="absolute right-3 h-5 w-5 text-gray-400 hover:text-gray-600"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              
               <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
                 {/* Filter tabs */}
                 <div className="hidden sm:flex flex-wrap space-x-1 bg-gray-100 p-1 rounded-lg">
-                  <button 
-                    type="button" 
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      activeFilter === FilterType.ALL 
-                        ? 'bg-white shadow-sm text-gray-800' 
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                    onClick={() => setActiveFilter(FilterType.ALL)}
-                  >
-                    All
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      activeFilter === FilterType.RECENT 
-                        ? 'bg-white shadow-sm text-gray-800' 
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                    onClick={() => setActiveFilter(FilterType.RECENT)}
-                  >
-                    Recent
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      activeFilter === FilterType.POPULAR
-                        ? 'bg-white shadow-sm text-gray-800' 
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                    onClick={() => setActiveFilter(FilterType.POPULAR)}
-                  >
-                    Popular
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      activeFilter === FilterType.PHOTOS
-                        ? 'bg-white shadow-sm text-gray-800' 
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                    onClick={() => setActiveFilter(FilterType.PHOTOS)}
-                  >
-                    Photos
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      activeFilter === FilterType.VIDEOS
-                        ? 'bg-white shadow-sm text-gray-800' 
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                    onClick={() => setActiveFilter(FilterType.VIDEOS)}
-                  >
-                    Videos
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                      activeFilter === FilterType.CACHED
-                        ? 'bg-white shadow-sm text-gray-800' 
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                    onClick={() => setActiveFilter(FilterType.CACHED)}
-                  >
-                    Cached
-                  </button>
+                  {/* Types & Sorting Filters */}
+                  <div className="flex space-x-1 border-r border-gray-300 pr-1 mr-1">
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        activeFilter === FilterType.ALL 
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.ALL)}
+                    >
+                      All
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        activeFilter === FilterType.RECENT 
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.RECENT)}
+                    >
+                      Recent
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        activeFilter === FilterType.POPULAR
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.POPULAR)}
+                    >
+                      Popular
+                    </button>
+                  </div>
+                  
+                  {/* Content Type Filters */}
+                  <div className="flex space-x-1 border-r border-gray-300 pr-1 mr-1">
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        activeFilter === FilterType.PHOTOS
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.PHOTOS)}
+                    >
+                      Photos
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        activeFilter === FilterType.VIDEOS
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.VIDEOS)}
+                    >
+                      Videos
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        activeFilter === FilterType.CACHED
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.CACHED)}
+                    >
+                      Cached
+                    </button>
+                  </div>
+                  
+                  {/* Platform Filters */}
+                  <div className="flex space-x-1">
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center ${
+                        activeFilter === FilterType.INSTAGRAM
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.INSTAGRAM)}
+                    >
+                      <span className="w-2 h-2 mr-2 bg-[#E1306C] rounded-full" aria-hidden="true"></span>
+                      Instagram
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center ${
+                        activeFilter === FilterType.YOUTUBE
+                          ? 'bg-white shadow-sm text-gray-800' 
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                      onClick={() => setActiveFilter(FilterType.YOUTUBE)}
+                    >
+                      <span className="w-2 h-2 mr-2 bg-[#FF0000] rounded-full" aria-hidden="true"></span>
+                      YouTube
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Create Post Button */}
