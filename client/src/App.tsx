@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,8 +7,9 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Settings from "@/pages/settings";
 import CreatePost from "@/pages/create-post";
-import { useEffect, useState } from "react";
+import AuthPage from "@/pages/auth-page";
 import { apiRequest } from "./lib/queryClient";
+import { ProtectedRoute } from "./lib/protected-route";
 
 interface User {
   id: number;
@@ -27,7 +28,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-export const AuthContext = React.createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
   login: async () => {},
@@ -37,9 +38,10 @@ export const AuthContext = React.createContext<AuthContextType>({
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard}/>
-      <Route path="/settings" component={Settings}/>
-      <Route path="/create-post" component={CreatePost}/>
+      <ProtectedRoute path="/" component={Dashboard}/>
+      <ProtectedRoute path="/settings" component={Settings}/>
+      <ProtectedRoute path="/create-post" component={CreatePost}/>
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -86,12 +88,14 @@ function App() {
   };
 
   useEffect(() => {
-    checkSession().then(() => {
-      // If not authenticated, auto-login the demo user
+    const initializeAuth = async () => {
+      await checkSession();
       if (!isAuthenticated) {
-        autoLogin();
+        await autoLogin();
       }
-    });
+    };
+    
+    initializeAuth();
   }, []);
 
   const login = async (username: string, password: string) => {

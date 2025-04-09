@@ -8,7 +8,7 @@ import {
   Menu,
   X 
 } from 'lucide-react';
-import { AuthContext } from '@/App';
+import { AuthContext } from '../../App';
 
 interface SidebarProps {
   collapsed?: boolean;

@@ -4,7 +4,7 @@ import ContentCard from '@/components/ui/content-card';
 import Sidebar from '@/components/ui/sidebar';
 import CreatePostModal from '@/components/ui/create-post-modal';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { AuthContext } from '@/App';
+import { AuthContext } from '../App';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useOfflineCache } from '@/hooks/use-offline-cache';
