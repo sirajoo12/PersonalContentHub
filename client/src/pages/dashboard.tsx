@@ -14,7 +14,10 @@ import { Loader2 } from 'lucide-react';
 enum FilterType {
   ALL = 'all',
   RECENT = 'recent',
-  POPULAR = 'popular'
+  POPULAR = 'popular',
+  PHOTOS = 'photos',
+  VIDEOS = 'videos',
+  CACHED = 'cached'
 }
 
 const Dashboard: React.FC = () => {
@@ -114,19 +117,40 @@ const Dashboard: React.FC = () => {
   const filteredPosts = React.useMemo(() => {
     if (!posts) return [];
     
+    // First filter by type
+    let filtered = [...posts];
+    
+    // Apply content type filters
+    switch (activeFilter) {
+      case FilterType.PHOTOS:
+        filtered = filtered.filter(post => post.type === 'photo' || post.type === 'image');
+        break;
+      case FilterType.VIDEOS:
+        filtered = filtered.filter(post => post.type === 'video');
+        break;
+      case FilterType.CACHED:
+        filtered = filtered.filter(post => post.is_cached);
+        break;
+      default:
+        // No content type filtering
+        break;
+    }
+    
+    // Then apply sorting
     switch (activeFilter) {
       case FilterType.RECENT:
-        return [...posts].sort(
+        return filtered.sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
       case FilterType.POPULAR:
-        return [...posts].sort((a, b) => {
+        return filtered.sort((a, b) => {
           const aMetric = a.platform === 'instagram' ? (a.likes_count || 0) : (a.views_count || 0);
           const bMetric = b.platform === 'instagram' ? (b.likes_count || 0) : (b.views_count || 0);
           return bMetric - aMetric;
         });
       default:
-        return posts;
+        // If not a sorting filter, just return the filtered results 
+        return filtered;
     }
   }, [posts, activeFilter]);
 
@@ -176,7 +200,7 @@ const Dashboard: React.FC = () => {
               
               <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
                 {/* Filter tabs */}
-                <div className="hidden sm:flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                <div className="hidden sm:flex flex-wrap space-x-1 bg-gray-100 p-1 rounded-lg">
                   <button 
                     type="button" 
                     className={`px-3 py-1.5 text-sm font-medium rounded-md ${
@@ -209,6 +233,39 @@ const Dashboard: React.FC = () => {
                     onClick={() => setActiveFilter(FilterType.POPULAR)}
                   >
                     Popular
+                  </button>
+                  <button 
+                    type="button" 
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                      activeFilter === FilterType.PHOTOS
+                        ? 'bg-white shadow-sm text-gray-800' 
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    onClick={() => setActiveFilter(FilterType.PHOTOS)}
+                  >
+                    Photos
+                  </button>
+                  <button 
+                    type="button" 
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                      activeFilter === FilterType.VIDEOS
+                        ? 'bg-white shadow-sm text-gray-800' 
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    onClick={() => setActiveFilter(FilterType.VIDEOS)}
+                  >
+                    Videos
+                  </button>
+                  <button 
+                    type="button" 
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                      activeFilter === FilterType.CACHED
+                        ? 'bg-white shadow-sm text-gray-800' 
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    onClick={() => setActiveFilter(FilterType.CACHED)}
+                  >
+                    Cached
                   </button>
                 </div>
                 

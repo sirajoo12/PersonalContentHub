@@ -60,48 +60,40 @@ const Sidebar: React.FC<SidebarProps> = ({
             
             {/* Navigation */}
             <nav className="mt-5 flex-1 px-2 bg-white space-y-1">
-              <Link href="/">
-                <a className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
-                  location === '/' 
-                    ? 'text-primary bg-gray-100' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}>
-                  <Home className="mr-3 h-6 w-6" />
-                  Dashboard
-                </a>
+              <Link href="/" className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
+                location === '/' 
+                  ? 'text-primary bg-gray-100' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}>
+                <Home className="mr-3 h-6 w-6" />
+                Dashboard
               </Link>
               
-              <Link href="/create-post">
-                <a className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
-                  location === '/create-post' 
-                    ? 'text-primary bg-gray-100' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}>
-                  <PlusCircle className="mr-3 h-6 w-6" />
-                  Create Post
-                </a>
+              <Link href="/create-post" className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
+                location === '/create-post' 
+                  ? 'text-primary bg-gray-100' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}>
+                <PlusCircle className="mr-3 h-6 w-6" />
+                Create Post
               </Link>
               
-              <Link href="/analytics">
-                <a className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
-                  location === '/analytics' 
-                    ? 'text-primary bg-gray-100' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}>
-                  <BarChart2 className="mr-3 h-6 w-6" />
-                  Analytics
-                </a>
+              <Link href="/analytics" className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
+                location === '/analytics' 
+                  ? 'text-primary bg-gray-100' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}>
+                <BarChart2 className="mr-3 h-6 w-6" />
+                Analytics
               </Link>
               
-              <Link href="/settings">
-                <a className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
-                  location === '/settings' 
-                    ? 'text-primary bg-gray-100' 
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}>
-                  <SettingsIcon className="mr-3 h-6 w-6" />
-                  Settings
-                </a>
+              <Link href="/settings" className={`flex items-center px-2 py-2 text-sm font-medium rounded-md group ${
+                location === '/settings' 
+                  ? 'text-primary bg-gray-100' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}>
+                <SettingsIcon className="mr-3 h-6 w-6" />
+                Settings
               </Link>
             </nav>
             
@@ -135,11 +127,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <span className="truncate">YouTube</span>
                 </button>
                 
-                <Link href="/settings">
-                  <a className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
-                    <span className="w-2.5 h-2.5 mr-4 bg-gray-300 rounded-full" aria-hidden="true"></span>
-                    <span className="truncate">Connect More</span>
-                  </a>
+                <Link href="/settings" className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900">
+                  <span className="w-2.5 h-2.5 mr-4 bg-gray-300 rounded-full" aria-hidden="true"></span>
+                  <span className="truncate">Connect More</span>
                 </Link>
               </div>
             </div>
