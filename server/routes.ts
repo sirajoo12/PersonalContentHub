@@ -1,10 +1,11 @@
-import express, { type Express, Request, Response } from "express";
+import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPostSchema, insertScheduledPostSchema } from "@shared/schema";
 import { z } from "zod";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import { setupAuth, hashPassword } from "./auth";
 
 // Mock data for demonstration
 const DEMO_POSTS = [
@@ -90,102 +91,56 @@ async function seedDemoPosts() {
   }
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Set up session middleware with MemoryStore
-  const MemoryStoreInstance = MemoryStore(session);
-  app.use(session({
-    cookie: { maxAge: 86400000 }, // 24 hours
-    store: new MemoryStoreInstance({
-      checkPeriod: 86400000 // prune expired entries every 24h
-    }),
-    resave: false,
-    saveUninitialized: false,
-    secret: process.env.SESSION_SECRET || 'socialsync-secret'
-  }));
+// Function to seed a demo user
+async function seedDemoUser() {
+  try {
+    // Check if demo user already exists
+    const existingUser = await storage.getUserByUsername('demo');
+    if (existingUser) return;
+    
+    // Create demo user with hashed password
+    await storage.createUser({
+      username: 'demo',
+      password: await hashPassword('password'),
+      display_name: 'John Doe',
+      email: 'john@example.com',
+      avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    });
+  } catch (error) {
+    console.error('Error seeding demo user:', error);
+  }
+}
 
-  // Seed demo posts
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication with Passport.js
+  setupAuth(app);
+
+  // Seed demo data
+  await seedDemoUser();
   await seedDemoPosts();
 
-  // Authentication route
-  app.post('/api/auth/login', async (req: Request, res: Response) => {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' });
-    }
-    
-    const user = await storage.getUserByUsername(username);
-    
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    
-    if (req.session) {
-      req.session.userId = user.id;
-      req.session.username = user.username;
-    }
-    
-    res.json({ 
-      id: user.id,
-      username: user.username,
-      display_name: user.display_name,
-      email: user.email,
-      avatar_url: user.avatar_url,
-      has_instagram: !!user.instagram_auth_token,
-      has_youtube: !!user.youtube_auth_token
-    });
-  });
-  
+  // Check if we're authenticated (for client to check session status)
   app.get('/api/auth/session', (req: Request, res: Response) => {
-    if (req.session && req.session.userId) {
-      return res.json({ 
-        isAuthenticated: true, 
-        userId: req.session.userId,
-        username: req.session.username
+    if (req.isAuthenticated()) {
+      return res.json({
+        isAuthenticated: true,
+        userId: req.user?.id,
+        username: req.user?.username
       });
     }
-    
     res.json({ isAuthenticated: false });
   });
-  
-  app.post('/api/auth/logout', (req: Request, res: Response) => {
-    req.session.destroy(err => {
-      if (err) {
-        return res.status(500).json({ message: 'Could not log out' });
-      }
-      res.json({ message: 'Logged out successfully' });
-    });
-  });
 
-  // User profile route
-  app.get('/api/user', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
+  // Helper middleware to ensure authentication
+  function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
+    if (req.isAuthenticated()) {
+      return next();
     }
-    
-    const user = await storage.getUser(req.session.userId);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    res.json({
-      id: user.id,
-      username: user.username,
-      display_name: user.display_name,
-      email: user.email,
-      avatar_url: user.avatar_url,
-      has_instagram: !!user.instagram_auth_token,
-      has_youtube: !!user.youtube_auth_token
-    });
-  });
+    res.status(401).json({ message: 'Not authenticated' });
+  }
 
   // Platform connection routes
-  app.post('/api/connect/instagram', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
+  app.post('/api/connect/instagram', ensureAuthenticated, async (req: Request, res: Response) => {
     const { token } = req.body;
     
     if (!token) {
@@ -193,18 +148,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      await storage.updateUserTokens(req.session.userId, token);
+      await storage.updateUserTokens(req.user!.id, token);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: 'Failed to connect Instagram' });
     }
   });
   
-  app.post('/api/connect/youtube', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
+  app.post('/api/connect/youtube', ensureAuthenticated, async (req: Request, res: Response) => {
     const { token } = req.body;
     
     if (!token) {
@@ -212,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      await storage.updateUserTokens(req.session.userId, undefined, token);
+      await storage.updateUserTokens(req.user!.id, undefined, token);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: 'Failed to connect YouTube' });
@@ -232,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post('/api/posts/cache', async (req: Request, res: Response) => {
+  app.post('/api/posts/cache', ensureAuthenticated, async (req: Request, res: Response) => {
     try {
       const { postId, isCached } = req.body;
       
@@ -253,35 +204,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Scheduled posts routes
-  app.get('/api/scheduled-posts', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
+  app.get('/api/scheduled-posts', ensureAuthenticated, async (req: Request, res: Response) => {
     try {
-      const posts = await storage.getScheduledPosts(req.session.userId);
+      const posts = await storage.getScheduledPosts(req.user!.id);
       res.json(posts);
     } catch (error) {
       res.status(500).json({ message: 'Failed to retrieve scheduled posts' });
     }
   });
   
-  app.post('/api/scheduled-posts', async (req: Request, res: Response) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-    
+  app.post('/api/scheduled-posts', ensureAuthenticated, async (req: Request, res: Response) => {
     try {
-      const schedulePostSchema = insertScheduledPostSchema.extend({
-        user_id: z.number().optional()
-      });
-      
-      const validated = schedulePostSchema.parse({
+      // Make sure to include user ID from authenticated user
+      const post = await storage.createScheduledPost({
         ...req.body,
-        user_id: req.session.userId
+        user_id: req.user!.id,
+        status: req.body.status || 'pending'
       });
       
-      const post = await storage.createScheduledPost(validated);
       res.status(201).json(post);
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -31,7 +32,7 @@ export const posts = pgTable("posts", {
 
 export const scheduled_posts = pgTable("scheduled_posts", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").notNull(),
+  user_id: integer("user_id").notNull().references(() => users.id),
   platform: text("platform").notNull(), // "instagram" | "youtube"
   content: text("content").notNull(),
   media_url: text("media_url"),
@@ -65,3 +66,15 @@ export type Post = typeof posts.$inferSelect;
 
 export type InsertScheduledPost = z.infer<typeof insertScheduledPostSchema>;
 export type ScheduledPost = typeof scheduled_posts.$inferSelect;
+
+// Define relationships
+export const usersRelations = relations(users, ({ many }) => ({
+  scheduledPosts: many(scheduled_posts),
+}));
+
+export const scheduledPostsRelations = relations(scheduled_posts, ({ one }) => ({
+  user: one(users, {
+    fields: [scheduled_posts.user_id],
+    references: [users.id],
+  }),
+}));
