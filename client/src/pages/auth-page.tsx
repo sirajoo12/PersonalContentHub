@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,21 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthContext } from '@/App';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 const AuthPage: React.FC = () => {
-  const { isAuthenticated, login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const [_, navigate] = useLocation();
   const [username, setUsername] = useState<string>('demo');
   const [password, setPassword] = useState<string>('password');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
-  
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +30,21 @@ const AuthPage: React.FC = () => {
     
     try {
       setIsLoading(true);
-      await login(username, password);
+      
+      // Direct API call to login
+      const response = await apiRequest('POST', '/api/login', { username, password });
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      
+      // Show success toast
       toast({
         title: "Success",
         description: "Logged in successfully",
       });
+      
+      // Manually navigate to home page
+      navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
       toast({

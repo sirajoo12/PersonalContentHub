@@ -89,9 +89,6 @@ function App() {
   useEffect(() => {
     const initializeAuth = async () => {
       await checkSession();
-      if (!isAuthenticated) {
-        await autoLogin();
-      }
     };
     
     initializeAuth();
@@ -110,8 +107,7 @@ function App() {
       setIsAuthenticated(true);
       setUser(userData);
       
-      // Navigate to home page
-      navigate('/');
+      // Note: Don't navigate here - leave that to the component that called login()
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
