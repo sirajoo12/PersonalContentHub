@@ -102,9 +102,28 @@ function App() {
     try {
       const response = await apiRequest('POST', '/api/auth/login', { username, password });
       const userData = await response.json();
+      console.log('Login response:', userData);
+      
+      // Handle successful login
       setIsAuthenticated(true);
       setUser(userData);
-      navigate('/');
+      
+      // Get updated session status to debug
+      const sessionResponse = await apiRequest('GET', '/api/auth/session', undefined);
+      const sessionData = await sessionResponse.json();
+      console.log('Session after login:', sessionData);
+      
+      if (sessionData.isAuthenticated) {
+        // Check if we get user data correctly
+        const userResponse = await apiRequest('GET', '/api/user', undefined);
+        const userDataFromApi = await userResponse.json();
+        console.log('User data from API:', userDataFromApi);
+      }
+      
+      // Only navigate if we're truly authenticated
+      if (sessionData.isAuthenticated) {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
