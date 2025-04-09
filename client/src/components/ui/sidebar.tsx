@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { 
   Home, 
@@ -8,7 +8,7 @@ import {
   Menu,
   X 
 } from 'lucide-react';
-import { AuthContext } from '../../App';
+import { useAuth } from '@/hooks/use-auth';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSelectPlatform
 }) => {
   const [location] = useLocation();
-  const { user, logout } = useContext(AuthContext);
+  const { user, logoutMutation } = useAuth();
 
   const isPlatformSelected = (platform: string) => {
     return selectedPlatforms.includes(platform);
@@ -166,10 +166,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </p>
                   </div>
                   <button
-                    onClick={() => logout()}
+                    onClick={() => logoutMutation.mutate()}
                     className="text-sm text-gray-500 hover:text-gray-900"
+                    disabled={logoutMutation.isPending}
                   >
-                    Logout
+                    {logoutMutation.isPending ? "Logging out..." : "Logout"}
                   </button>
                 </div>
               </div>

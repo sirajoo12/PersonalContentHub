@@ -1,10 +1,10 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import ContentCard from '@/components/ui/content-card';
 import Sidebar from '@/components/ui/sidebar';
 import CreatePostModal from '@/components/ui/create-post-modal';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { AuthContext } from '../App';
+import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useOfflineCache } from '@/hooks/use-offline-cache';
@@ -18,7 +18,7 @@ enum FilterType {
 }
 
 const Dashboard: React.FC = () => {
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated, user } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['instagram', 'youtube']);
   const [activeFilter, setActiveFilter] = useState<FilterType>(FilterType.ALL);

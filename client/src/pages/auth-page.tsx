@@ -1,20 +1,25 @@
-import React, { useContext, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AuthContext } from '@/App';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 
 const AuthPage: React.FC = () => {
-  const { login } = useContext(AuthContext);
-  const [_, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [username, setUsername] = useState<string>('demo');
   const [password, setPassword] = useState<string>('password');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
+  const { isAuthenticated, loginMutation } = useAuth();
+  
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,33 +33,8 @@ const AuthPage: React.FC = () => {
       return;
     }
     
-    try {
-      setIsLoading(true);
-      
-      // Direct API call to login
-      const response = await apiRequest('POST', '/api/login', { username, password });
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-      
-      // Show success toast
-      toast({
-        title: "Success",
-        description: "Logged in successfully",
-      });
-      
-      // Manually navigate to home page
-      navigate('/');
-    } catch (error) {
-      console.error('Login failed:', error);
-      toast({
-        title: "Login Failed",
-        description: "Invalid username or password",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Use the login mutation from our auth hook
+    loginMutation.mutate({ username, password });
   };
   
   return (
@@ -101,9 +81,9 @@ const AuthPage: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={loginMutation.isPending}
                 >
-                  {isLoading ? 'Logging in...' : 'Log in'}
+                  {loginMutation.isPending ? 'Logging in...' : 'Log in'}
                 </Button>
               </form>
             </CardContent>

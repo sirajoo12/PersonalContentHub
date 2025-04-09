@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Route, Redirect } from 'wouter';
-import { AuthContext } from '../App';
+import { useAuth } from '@/hooks/use-auth';
 
 interface ProtectedRouteProps {
   path: string;
@@ -8,12 +8,22 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ path, component: Component }) => {
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   return (
     <Route
       path={path}
       component={() => {
+        // Show loading indicator while checking auth
+        if (isLoading) {
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          );
+        }
+        
+        // Redirect if not authenticated
         if (!isAuthenticated || !user) {
           return (
             <div className="min-h-screen flex items-center justify-center flex-col p-4">
@@ -24,6 +34,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ path, component:
           );
         }
         
+        // Render the protected component
         return <Component />;
       }}
     />
