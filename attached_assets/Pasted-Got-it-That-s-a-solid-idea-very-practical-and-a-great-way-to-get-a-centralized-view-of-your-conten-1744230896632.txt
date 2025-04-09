@@ -1,0 +1,69 @@
+Got it! That’s a solid idea—very practical, and a great way to get a centralized view of your content across platforms. I’ll help you get everything organized so Replit Agent can build exactly what you need. Let's break down the project together so I can create a complete prompt for Replit Agent.
+
+---
+
+### Here's what I have from you so far:
+
+#### ✅ Project Description
+You want to build **a dashboard application** that displays your posts from **Instagram, YouTube**, and possibly other social platforms **in one centralized space**. This will help you view all your social media content without jumping between apps.
+
+---
+
+### Let me ask a few quick questions to complete the picture:
+
+1. **📝 Project Name**  
+   Do you have a name for the project? If not, I can suggest a few like:
+   - SocialSync
+   - AllPosts Hub
+   - CreatorBoard
+   - MyContentHub
+
+2. **📱 Target Platform**  
+   Would you prefer this to run as a:
+   - Web App (accessible in a browser),
+   - Mobile App (iOS/Android),
+   - Desktop App?
+
+3. **🌐 Operating Environment**  
+   Should it work:
+   - **Online only** (sync live with platforms),
+   - Or with some **offline capability** (e.g., showing cached posts)?
+
+4. **☁️ Hosting Options**  
+   Where do you want to host the app? Options include:
+   - Replit (good for prototyping),
+   - AWS / Vercel / Netlify (more robust),
+   - Your own server?
+
+5. **🎨 Interface Style**  
+   Any design vibes you're aiming for? E.g.:
+   - Minimalist,
+   - Colorful / branded,
+   - Clean & professional,
+   - Inspired by any existing dashboards?
+
+6. **📱 Example Applications**  
+   Any apps that have a design or layout you like? (e.g., Notion, Buffer, Hootsuite, Linktree?)
+
+7. **📤 Expected Outputs**  
+   What should the app display? For example:
+   - Post title/caption,
+   - Thumbnail,
+   - Link to original post,
+   - Date/time,
+   - Views/likes?
+
+8. **✨ Additional Features (Optional)**  
+   Do you want to include:
+   - Filters by platform or date?
+   - Ability to post directly?
+   - Analytics (likes, comments, views)?
+   - Notifications?
+
+9. **🗣️ Language Preferences**  
+   - What language should I use when writing the prompt for Replit Agent?
+   - What language should the application interface be in?
+
+---
+
+Once you answer those, I’ll generate the full Replit Agent prompt for you. Sound good?
