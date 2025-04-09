@@ -55,15 +55,14 @@ function App() {
 
   const checkSession = async () => {
     try {
-      const response = await apiRequest('GET', '/api/auth/session', undefined);
-      const sessionData = await response.json();
+      // Try to get user data directly - will return 401 if not authenticated
+      const userResponse = await fetch('/api/user', {
+        credentials: 'include'
+      });
       
-      if (sessionData.isAuthenticated) {
-        setIsAuthenticated(true);
-        
-        // Fetch user data
-        const userResponse = await apiRequest('GET', '/api/user', undefined);
+      if (userResponse.ok) {
         const userData = await userResponse.json();
+        setIsAuthenticated(true);
         setUser(userData);
       } else {
         setIsAuthenticated(false);
@@ -100,30 +99,19 @@ function App() {
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await apiRequest('POST', '/api/auth/login', { username, password });
-      const userData = await response.json();
-      console.log('Login response:', userData);
+      // First, attempt direct API login
+      await apiRequest('POST', '/api/login', { username, password });
       
-      // Handle successful login
+      // After login, check if we're authenticated and get user data
+      const userResponse = await apiRequest('GET', '/api/user', undefined);
+      const userData = await userResponse.json();
+      
+      // Set authentication state in React
       setIsAuthenticated(true);
       setUser(userData);
       
-      // Get updated session status to debug
-      const sessionResponse = await apiRequest('GET', '/api/auth/session', undefined);
-      const sessionData = await sessionResponse.json();
-      console.log('Session after login:', sessionData);
-      
-      if (sessionData.isAuthenticated) {
-        // Check if we get user data correctly
-        const userResponse = await apiRequest('GET', '/api/user', undefined);
-        const userDataFromApi = await userResponse.json();
-        console.log('User data from API:', userDataFromApi);
-      }
-      
-      // Only navigate if we're truly authenticated
-      if (sessionData.isAuthenticated) {
-        navigate('/');
-      }
+      // Navigate to home page
+      navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -132,10 +120,10 @@ function App() {
 
   const logout = async () => {
     try {
-      await apiRequest('POST', '/api/auth/logout', undefined);
+      await apiRequest('POST', '/api/logout', undefined);
       setIsAuthenticated(false);
       setUser(null);
-      navigate('/');
+      navigate('/auth');
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
