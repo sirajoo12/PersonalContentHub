@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node modules
 node_modules/
 
@@ -18,3 +19,11 @@ Thumbs.db
 # Replit metadata
 .replit
 .hidden/
+=======
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+>>>>>>> 1eb9599 (Implement initial PostSync dashboard application.)
