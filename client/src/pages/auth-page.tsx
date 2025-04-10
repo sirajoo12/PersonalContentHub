@@ -4,15 +4,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 
 const AuthPage: React.FC = () => {
   const [location, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState<string>('login');
+  // Login form state
   const [username, setUsername] = useState<string>('demo');
   const [password, setPassword] = useState<string>('password');
+  // Register form state
+  const [regUsername, setRegUsername] = useState<string>('');
+  const [regPassword, setRegPassword] = useState<string>('');
+  const [regEmail, setRegEmail] = useState<string>('');
+  const [regDisplayName, setRegDisplayName] = useState<string>('');
+  
   const { toast } = useToast();
-  const { isAuthenticated, loginMutation } = useAuth();
+  const { isAuthenticated, loginMutation, registerMutation } = useAuth();
   
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -35,6 +44,30 @@ const AuthPage: React.FC = () => {
     
     // Use the login mutation from our auth hook
     loginMutation.mutate({ username, password });
+  };
+  
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!regUsername || !regPassword) {
+      toast({
+        title: "Error",
+        description: "Username and password are required",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Use the register mutation from our auth hook
+    registerMutation.mutate({ 
+      username: regUsername, 
+      password: regPassword,
+      email: regEmail || null,
+      display_name: regDisplayName || null,
+      avatar_url: null,
+      instagram_auth_token: null,
+      youtube_auth_token: null
+    });
   };
   
   return (

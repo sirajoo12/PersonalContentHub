@@ -22,6 +22,7 @@ interface AuthContextType {
   error: Error | null;
   loginMutation: ReturnType<typeof useLoginMutation>;
   logoutMutation: ReturnType<typeof useLogoutMutation>;
+  registerMutation: ReturnType<typeof useRegisterMutation>;
 }
 
 function useLoginMutation() {
@@ -95,6 +96,48 @@ function useLogoutMutation() {
   });
 }
 
+function useRegisterMutation() {
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async (userData: {
+      username: string;
+      password: string;
+      email: string | null;
+      display_name: string | null;
+      avatar_url: string | null;
+      instagram_auth_token: string | null;
+      youtube_auth_token: string | null;
+    }) => {
+      const response = await apiRequest('POST', '/api/register', userData);
+      if (!response.ok) throw new Error('Registration failed');
+      
+      return await response.json();
+    },
+    onSuccess: (userData) => {
+      // Update cached user data
+      queryClient.setQueryData(['user'], userData);
+      
+      // Show success message
+      toast({
+        title: 'Success',
+        description: 'Account created successfully',
+      });
+      
+      // Navigate to dashboard
+      navigate('/');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Registration Failed',
+        description: error.message || 'Failed to create account',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 // Create context
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -123,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const loginMutation = useLoginMutation();
   const logoutMutation = useLogoutMutation();
+  const registerMutation = useRegisterMutation();
 
   const isAuthenticated = !!user;
 
@@ -134,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
     loginMutation,
     logoutMutation,
+    registerMutation,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
